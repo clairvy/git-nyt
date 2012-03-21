@@ -4,47 +4,13 @@ use strict;
 use warnings;
 
 use Test::More;
-use FindBin;
 
-use Git::Repository;
 use Path::Class;
 use System::Command;
 
-sub write_file
-{
-    my ($fname, $body) = @_;
-    my $file = file($fname)->openw or die $!;
-    print $file $body;
-    close($file) or die $!;
-}
-
-sub blob_bin
-{
-    $FindBin::RealBin . '/../blib/script';
-}
-
-sub set_path
-{
-    my $blib_bin = blob_bin;
-    $ENV{PATH} = join(':', $blib_bin, $ENV{PATH});
-}
-
-{
-    my $dir;
-    sub work_dir
-    {
-        unless ($dir) {
-            $dir = dir('testunit_work');
-        }
-        return $dir;
-    }
-}
-
-sub repo
-{
-    my $dir = work_dir;
-    Git::Repository->new(work_tree => $dir->stringify);
-}
+use FindBin;
+use lib qq($FindBin::RealBin);
+use TestUtil;
 
 sub is_dirty
 {
@@ -65,15 +31,7 @@ sub is_dirty
 
 # setup
 {
-    set_path;
-    my $dir = work_dir;
-    mkdir $dir;
-    Git::Repository->run('init' => $dir->stringify);
-    my $r = repo;
-    my $fname = 'a.txt';
-    write_file($dir->file($fname), "a\n");
-    $r->run('add' => $fname);
-    $r->run('commit' => '-m', 'first commit');
+    setup_repo_and_first_commit;
 }
 
 {
@@ -93,7 +51,7 @@ sub is_dirty
 
 # teardown
 {
-    system('rm -rf ' . work_dir);
+    teardown_repo;
 }
 
 done_testing;
